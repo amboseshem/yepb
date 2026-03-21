@@ -40,8 +40,12 @@ export async function POST(req: Request) {
 
     if (contribution.status === "confirmed") {
       const reverseAmount = contribution.allocations
-        .filter((a) => a.destinationReference === "contribution_wallet")
-        .reduce((sum, a) => sum + Number(a.amount), 0);
+        .filter((a: { destinationReference: string | null }) => {
+          return a.destinationReference === "contribution_wallet";
+        })
+        .reduce((sum: number, a: { amount: unknown }) => {
+          return sum + Number(a.amount);
+        }, 0);
 
       const wallet = await prisma.wallet.findUnique({
         where: {
@@ -85,12 +89,15 @@ export async function POST(req: Request) {
     return NextResponse.redirect(
       new URL(`/dashboard/contributions/${contributionIdValue}`, req.url)
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("CANCEL CONTRIBUTION ERROR:", error);
 
+    const message =
+      error instanceof Error ? error.message : "Failed to cancel contribution.";
+
     return NextResponse.json(
-      { success: false, message: error?.message || "Failed to cancel contribution." },
-      { status: error?.message === "Forbidden" ? 403 : 500 }
+      { success: false, message },
+      { status: message === "Forbidden" ? 403 : 500 }
     );
   }
 }
