@@ -1,0 +1,1015 @@
+// Youth Empowerment Platform (YEP)
+// Prisma schema based on the PostgreSQL SQL design
+// Recommended stack: Next.js + Prisma + PostgreSQL
+//
+// WHAT TO DO NOW
+// 1) Create a new app/project
+// 2) Install Prisma
+// 3) Put this file in prisma/schema.prisma
+// 4) Create PostgreSQL database
+// 5) Add DATABASE_URL in .env
+// 6) Run: npx prisma generate
+// 7) Run: npx prisma db push
+// 8) Seed roles, permissions, branches, categories, settings
+// 9) Build auth + users + member profiles first
+
+// Example .env
+// DATABASE_URL="postgresql://postgres:password@localhost:5432/yep_db?schema=public"
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  pending
+  active
+  suspended
+  blocked
+  archived
+}
+
+enum MembershipStatus {
+  pending
+  active
+  inactive
+  suspended
+  exited
+}
+
+enum GenderType {
+  male
+  female
+  other
+}
+
+enum MaritalStatusType {
+  single
+  married
+  engaged
+  widowed
+  separated
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  declined
+  cancelled
+}
+
+enum PaymentMethodType {
+  cash
+  mpesa
+  bank
+  wallet
+  card
+  other
+}
+
+enum ContributionFrequency {
+  once
+  weekly
+  monthly
+  quarterly
+  yearly
+}
+
+enum ContributionStatus {
+  pending
+  confirmed
+  rejected
+  refunded
+}
+
+enum AllocationType {
+  savings
+  welfare
+  project_fund
+  rotational_support
+  training
+  other
+}
+
+enum WelfareRequestType {
+  medical
+  bereavement
+  emergency
+  school_support
+  family_crisis
+  other
+}
+
+enum WelfareStatus {
+  pending
+  under_review
+  approved
+  declined
+  disbursed
+  closed
+}
+
+enum ProjectStatus {
+  draft
+  pending_approval
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum ProjectTransactionType {
+  capital
+  expense
+  income
+  profit_share
+  maintenance
+  adjustment
+}
+
+enum AudienceType {
+  all_members
+  leaders
+  branch_members
+  project_team
+  custom_group
+  public
+}
+
+enum MeetingType {
+  physical
+  online
+  hybrid
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  excused
+  late
+}
+
+enum ContentTypeEnum {
+  video
+  pdf
+  audio
+  article
+  live_session
+  image
+  link
+}
+
+enum TrainingStatus {
+  draft
+  published
+  archived
+}
+
+enum CompletionStatus {
+  not_started
+  in_progress
+  completed
+}
+
+enum WalletTypeEnum {
+  contribution_wallet
+  earnings_wallet
+  savings_wallet
+  project_wallet
+}
+
+enum WalletStatus {
+  active
+  frozen
+  closed
+}
+
+enum WalletTxnType {
+  contribution
+  commission
+  withdrawal
+  transfer
+  welfare_disbursement
+  project_profit
+  adjustment
+  deposit
+  purchase
+  refund
+}
+
+enum TxnDirection {
+  credit
+  debit
+}
+
+enum WithdrawalStatus {
+  pending
+  approved
+  declined
+  paid
+  cancelled
+}
+
+enum ReferralStatus {
+  pending
+  active
+  cancelled
+  inactive
+}
+
+enum CommissionTriggerType {
+  signup
+  product_purchase
+  subscription
+  renewal
+  manual_bonus
+}
+
+enum CommissionStatus {
+  pending
+  approved
+  paid
+  rejected
+  reversed
+}
+
+enum JoinRequestStatus {
+  pending
+  contacted
+  approved
+  declined
+  converted
+}
+
+enum TestimonialStatus {
+  pending
+  approved
+  rejected
+  published
+  archived
+}
+
+enum PageStatus {
+  draft
+  published
+  archived
+}
+
+enum OrderPaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+  partially_refunded
+}
+
+enum OrderStatus {
+  draft
+  placed
+  processing
+  completed
+  cancelled
+}
+
+enum NotificationChannel {
+  in_app
+  sms
+  email
+  whatsapp_manual
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+  read
+}
+
+enum AppAccessEnum {
+  website
+  member_portal
+  admin_panel
+  training_center
+  finance
+  projects
+  referrals
+}
+
+model Role {
+  id              BigInt           @id @default(autoincrement())
+  name            String           @unique @db.VarChar(100)
+  code            String           @unique @db.VarChar(100)
+  description     String?
+  createdAt       DateTime         @default(now())
+  users           User[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id              BigInt           @id @default(autoincrement())
+  name            String           @unique @db.VarChar(150)
+  code            String           @unique @db.VarChar(150)
+  description     String?
+  createdAt       DateTime         @default(now())
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id           BigInt     @id @default(autoincrement())
+  roleId       BigInt
+  permissionId BigInt
+  createdAt    DateTime   @default(now())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model User {
+  id                    String              @id @default(uuid()) @db.Uuid
+  fullName              String              @db.VarChar(200)
+  username              String?             @unique @db.VarChar(100)
+  email                 String?             @unique @db.VarChar(200)
+  phone                 String              @unique @db.VarChar(30)
+  passwordHash          String
+  roleId                BigInt
+  status                UserStatus          @default(pending)
+  isVerified            Boolean             @default(false)
+  emailVerifiedAt       DateTime?
+  phoneVerifiedAt       DateTime?
+  lastLoginAt           DateTime?
+  lastLoginIp           String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  deletedAt             DateTime?
+  role                  Role                @relation(fields: [roleId], references: [id])
+   appAccess               UserAppAccess[]
+  memberProfile           MemberProfile?     @relation("MemberProfileAccount")
+  approvedMemberProfiles  MemberProfile[]    @relation("MemberProfileApprovedBy")
+  memberGroupsCreated   MemberGroup[]
+  contributionPlans     ContributionPlan[]
+  contributionsRecorded Contribution[]      @relation("ContributionRecordedBy")
+  receiptsIssued        Receipt[]
+  welfareReviewed       WelfareRequest[]    @relation("WelfareReviewedBy")
+  welfareApproved       WelfareDisbursement[] @relation("WelfareApprovedBy")
+  welfareDisbursed      WelfareDisbursement[] @relation("WelfareDisbursedBy")
+  projectsCreated       Project[]           @relation("ProjectCreatedBy")
+  projectsApproved      Project[]           @relation("ProjectApprovedBy")
+  projectTransactions   ProjectTransaction[]
+  projectReports        ProjectReport[]
+  announcementsCreated  Announcement[]
+  meetingsCreated       Meeting[]
+  trainingsLed          Training[]
+  walletTransactionsApproved WalletTransaction[]
+  withdrawalReviewed    WithdrawalRequest[]
+  joinRequestsReviewed  JoinRequest[]
+  testimonialsApproved  Testimonial[]
+  websitePagesUpdated   WebsitePage[]
+  systemSettingsUpdated SystemSetting[]
+  auditLogs             AuditLog[]
+  notifications         Notification[]
+}
+
+model UserAppAccess {
+  id        BigInt        @id @default(autoincrement())
+  userId    String        @db.Uuid
+  appName   AppAccessEnum
+  isEnabled Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, appName])
+}
+
+model Branch {
+  id              BigInt           @id @default(autoincrement())
+  name            String           @unique @db.VarChar(150)
+  code            String?          @unique @db.VarChar(50)
+  location        String?          @db.VarChar(200)
+  leaderName      String?          @db.VarChar(200)
+  contactPhone    String?          @db.VarChar(30)
+  status          ApprovalStatus   @default(approved)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  memberProfiles  MemberProfile[]
+  memberGroups    MemberGroup[]
+  contributionPlans ContributionPlan[]
+  announcements   Announcement[]
+  meetings        Meeting[]
+}
+
+model MemberProfile {
+  id                    BigInt            @id @default(autoincrement())
+  userId                String            @unique @db.Uuid
+  memberNumber          String            @unique @db.VarChar(50)
+  gender                GenderType?
+  dateOfBirth           DateTime?
+  nationalId            String?           @db.VarChar(50)
+  churchBranchId        BigInt?
+  occupation            String?           @db.VarChar(150)
+  maritalStatus         MaritalStatusType?
+  nextOfKinName         String?           @db.VarChar(200)
+  nextOfKinPhone        String?           @db.VarChar(30)
+  address               String?
+  avatarUrl             String?
+  joinDate              DateTime          @default(now())
+  membershipStatus      MembershipStatus  @default(pending)
+  sponsorMemberId       BigInt?
+  approvedByUserId      String?           @db.Uuid
+  approvedAt            DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+   user                  User              @relation("MemberProfileAccount", fields: [userId], references: [id], onDelete: Cascade)
+  branch                Branch?           @relation(fields: [churchBranchId], references: [id])
+  sponsor               MemberProfile?    @relation("MemberSponsor", fields: [sponsorMemberId], references: [id])
+  sponsoredMembers      MemberProfile[]   @relation("MemberSponsor")
+approvedBy            User?             @relation("MemberProfileApprovedBy", fields: [approvedByUserId], references: [id])
+  groupMemberships      MemberGroupMember[]
+  contributions         Contribution[]
+  receipts              Receipt[]
+  welfareRequests       WelfareRequest[]
+  welfareDisbursements  WelfareDisbursement[]
+  projectMemberships    ProjectMember[]
+  wallets               Wallet[]
+  withdrawalRequests    WithdrawalRequest[]
+  referralCode          ReferralCode?
+  referralsAsSponsor    Referral[]        @relation("ReferralSponsor")
+  referralAsReferred    Referral?         @relation("ReferralReferred")
+  commissionsEarned     Commission[]      @relation("CommissionMember")
+  commissionsSource     Commission[]      @relation("CommissionSourceMember")
+  testimonials          Testimonial[]
+  orders                Order[]
+  trainingEnrollments   TrainingEnrollment[]
+  meetingAttendance     MeetingAttendance[]
+  ancestorTree          MlmTreeCache[]    @relation("AncestorTree")
+  descendantTree        MlmTreeCache[]    @relation("DescendantTree")
+}
+
+model MemberGroup {
+  id              BigInt              @id @default(autoincrement())
+  name            String              @db.VarChar(150)
+  description     String?
+  branchId        BigInt?
+  createdByUserId String?             @db.Uuid
+  status          ApprovalStatus      @default(approved)
+  createdAt       DateTime            @default(now())
+  branch          Branch?             @relation(fields: [branchId], references: [id])
+  createdBy       User?               @relation(fields: [createdByUserId], references: [id])
+  members         MemberGroupMember[]
+  contributionPlans ContributionPlan[]
+  announcements   Announcement[]
+  meetings        Meeting[]
+
+  @@unique([name, branchId])
+}
+
+model MemberGroupMember {
+  id        BigInt         @id @default(autoincrement())
+  groupId   BigInt
+  memberId  BigInt
+  joinedAt  DateTime       @default(now())
+  status    ApprovalStatus @default(approved)
+  group     MemberGroup    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  member    MemberProfile  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, memberId])
+}
+
+model ContributionCategory {
+  id                BigInt             @id @default(autoincrement())
+  name              String             @unique @db.VarChar(100)
+  code              String             @unique @db.VarChar(100)
+  description       String?
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  contributionPlans ContributionPlan[]
+  contributions     Contribution[]
+}
+
+model ContributionPlan {
+  id                BigInt                  @id @default(autoincrement())
+  name              String                  @db.VarChar(150)
+  categoryId        BigInt
+  amount            Decimal                 @db.Decimal(14, 2)
+  frequency         ContributionFrequency
+  startDate         DateTime
+  endDate           DateTime?
+  appliesToGroupId  BigInt?
+  appliesToBranchId BigInt?
+  isMandatory       Boolean                 @default(false)
+  status            ApprovalStatus          @default(approved)
+  createdByUserId   String?                 @db.Uuid
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  category          ContributionCategory    @relation(fields: [categoryId], references: [id])
+  group             MemberGroup?            @relation(fields: [appliesToGroupId], references: [id])
+  branch            Branch?                 @relation(fields: [appliesToBranchId], references: [id])
+  createdBy         User?                   @relation(fields: [createdByUserId], references: [id])
+  contributions     Contribution[]
+}
+
+model Contribution {
+  id                    BigInt               @id @default(autoincrement())
+  memberId              BigInt
+  contributionPlanId    BigInt?
+  categoryId            BigInt
+  amount                Decimal              @db.Decimal(14, 2)
+  paymentMethod         PaymentMethodType
+  transactionReference  String?              @db.VarChar(150)
+  paymentDate           DateTime             @default(now())
+  recordedByUserId      String?              @db.Uuid
+  status                ContributionStatus   @default(pending)
+  notes                 String?
+  receiptNumber         String?              @unique @db.VarChar(100)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  member                MemberProfile        @relation(fields: [memberId], references: [id])
+  plan                  ContributionPlan?    @relation(fields: [contributionPlanId], references: [id])
+  category              ContributionCategory @relation(fields: [categoryId], references: [id])
+  recordedBy            User?                @relation("ContributionRecordedBy", fields: [recordedByUserId], references: [id])
+  allocations           ContributionAllocation[]
+  receipt               Receipt?
+}
+
+model ContributionAllocation {
+  id                   BigInt         @id @default(autoincrement())
+  contributionId       BigInt
+  allocationType       AllocationType
+  percentage           Decimal?       @db.Decimal(5, 2)
+  amount               Decimal        @db.Decimal(14, 2)
+  destinationReference String?        @db.VarChar(150)
+  createdAt            DateTime       @default(now())
+  contribution         Contribution   @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+}
+
+model Receipt {
+  id              BigInt         @id @default(autoincrement())
+  receiptNumber   String         @unique @db.VarChar(100)
+  memberId        BigInt
+  contributionId  BigInt?        @unique
+  amount          Decimal        @db.Decimal(14, 2)
+  issuedByUserId  String?        @db.Uuid
+  issuedAt        DateTime       @default(now())
+  pdfUrl          String?
+  status          ApprovalStatus @default(approved)
+  member          MemberProfile  @relation(fields: [memberId], references: [id])
+  contribution    Contribution?  @relation(fields: [contributionId], references: [id], onDelete: SetNull)
+  issuedBy        User?          @relation(fields: [issuedByUserId], references: [id])
+}
+
+model WelfareRequest {
+  id                    BigInt             @id @default(autoincrement())
+  memberId              BigInt
+  requestType           WelfareRequestType
+  title                 String             @db.VarChar(200)
+  description           String
+  amountRequested       Decimal?           @db.Decimal(14, 2)
+  supportingDocumentUrl String?
+  status                WelfareStatus      @default(pending)
+  reviewedByUserId      String?            @db.Uuid
+  reviewedAt            DateTime?
+  decisionNotes         String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  member                MemberProfile      @relation(fields: [memberId], references: [id])
+  reviewedBy            User?              @relation("WelfareReviewedBy", fields: [reviewedByUserId], references: [id])
+  disbursement          WelfareDisbursement?
+}
+
+model WelfareDisbursement {
+  id                   BigInt         @id @default(autoincrement())
+  welfareRequestId     BigInt         @unique
+  memberId             BigInt
+  amountApproved       Decimal        @db.Decimal(14, 2)
+  paymentMethod        PaymentMethodType
+  transactionReference String?        @db.VarChar(150)
+  approvedByUserId     String?        @db.Uuid
+  disbursedByUserId    String?        @db.Uuid
+  disbursedAt          DateTime?
+  notes                String?
+  createdAt            DateTime       @default(now())
+  welfareRequest       WelfareRequest @relation(fields: [welfareRequestId], references: [id], onDelete: Cascade)
+  member               MemberProfile  @relation(fields: [memberId], references: [id])
+  approvedBy           User?          @relation("WelfareApprovedBy", fields: [approvedByUserId], references: [id])
+  disbursedBy          User?          @relation("WelfareDisbursedBy", fields: [disbursedByUserId], references: [id])
+}
+
+model Project {
+  id               BigInt               @id @default(autoincrement())
+  name             String               @db.VarChar(200)
+  code             String?              @unique @db.VarChar(100)
+  description      String?
+  projectType      String?              @db.VarChar(100)
+  startDate        DateTime?
+  expectedEndDate  DateTime?
+  status           ProjectStatus        @default(draft)
+  createdByUserId  String?              @db.Uuid
+  approvedByUserId String?              @db.Uuid
+  budgetAmount     Decimal?             @db.Decimal(14, 2)
+  capitalAmount    Decimal?             @db.Decimal(14, 2)
+  location         String?              @db.VarChar(200)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  createdBy        User?                @relation("ProjectCreatedBy", fields: [createdByUserId], references: [id])
+  approvedBy       User?                @relation("ProjectApprovedBy", fields: [approvedByUserId], references: [id])
+  members          ProjectMember[]
+  transactions     ProjectTransaction[]
+  reports          ProjectReport[]
+}
+
+model ProjectMember {
+  id        BigInt         @id @default(autoincrement())
+  projectId BigInt
+  memberId  BigInt
+  role      String?        @db.VarChar(100)
+  joinedAt  DateTime       @default(now())
+  status    ApprovalStatus @default(approved)
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  member    MemberProfile  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, memberId])
+}
+
+model ProjectTransaction {
+  id                  BigInt                 @id @default(autoincrement())
+  projectId           BigInt
+  transactionType     ProjectTransactionType
+  amount              Decimal                @db.Decimal(14, 2)
+  description         String?
+  transactionDate     DateTime               @default(now())
+  paymentMethod       PaymentMethodType?
+  referenceNo         String?                @db.VarChar(150)
+  recordedByUserId    String?                @db.Uuid
+  createdAt           DateTime               @default(now())
+  project             Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  recordedBy          User?                  @relation(fields: [recordedByUserId], references: [id])
+}
+
+model ProjectReport {
+  id                BigInt    @id @default(autoincrement())
+  projectId         BigInt
+  title             String    @db.VarChar(200)
+  summary           String?
+  reportPeriodStart DateTime?
+  reportPeriodEnd   DateTime?
+  totalIncome       Decimal   @default(0) @db.Decimal(14, 2)
+  totalExpense      Decimal   @default(0) @db.Decimal(14, 2)
+  netProfit         Decimal   @default(0) @db.Decimal(14, 2)
+  preparedByUserId  String?   @db.Uuid
+  createdAt         DateTime  @default(now())
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  preparedBy        User?     @relation(fields: [preparedByUserId], references: [id])
+}
+
+model Announcement {
+  id              BigInt       @id @default(autoincrement())
+  title           String       @db.VarChar(200)
+  message         String
+  audience        AudienceType @default(all_members)
+  branchId        BigInt?
+  groupId         BigInt?
+  createdByUserId String?      @db.Uuid
+  publishedAt     DateTime?
+  expiryDate      DateTime?
+  status          PageStatus   @default(draft)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  branch          Branch?      @relation(fields: [branchId], references: [id])
+  group           MemberGroup? @relation(fields: [groupId], references: [id])
+  createdBy       User?        @relation(fields: [createdByUserId], references: [id])
+}
+
+model Meeting {
+  id              BigInt         @id @default(autoincrement())
+  title           String         @db.VarChar(200)
+  description     String?
+  meetingMode     MeetingType
+  meetingDate     DateTime
+  startTime       DateTime?
+  endTime         DateTime?
+  location        String?        @db.VarChar(200)
+  meetingLink     String?
+  branchId        BigInt?
+  groupId         BigInt?
+  createdByUserId String?        @db.Uuid
+  status          ApprovalStatus @default(approved)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  branch          Branch?        @relation(fields: [branchId], references: [id])
+  group           MemberGroup?   @relation(fields: [groupId], references: [id])
+  createdBy       User?          @relation(fields: [createdByUserId], references: [id])
+  attendance      MeetingAttendance[]
+}
+
+model MeetingAttendance {
+  id               BigInt           @id @default(autoincrement())
+  meetingId        BigInt
+  memberId         BigInt
+  attendanceStatus AttendanceStatus
+  checkInTime      DateTime?
+  remarks          String?
+  meeting          Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  member           MemberProfile    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, memberId])
+}
+
+model TrainingCategory {
+  id          BigInt         @id @default(autoincrement())
+  name        String         @unique @db.VarChar(120)
+  description String?
+  status      ApprovalStatus @default(approved)
+  createdAt   DateTime       @default(now())
+  trainings   Training[]
+}
+
+model Training {
+  id              BigInt          @id @default(autoincrement())
+  categoryId      BigInt?
+  title           String          @db.VarChar(200)
+  description     String?
+  trainerUserId   String?         @db.Uuid
+  contentType     ContentTypeEnum
+  contentUrl      String?
+  durationMinutes Int?
+  status          TrainingStatus  @default(draft)
+  publishedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  category        TrainingCategory? @relation(fields: [categoryId], references: [id])
+  trainer         User?           @relation(fields: [trainerUserId], references: [id])
+  enrollments     TrainingEnrollment[]
+}
+
+model TrainingEnrollment {
+  id               BigInt           @id @default(autoincrement())
+  trainingId       BigInt
+  memberId         BigInt
+  enrolledAt       DateTime         @default(now())
+  completionStatus CompletionStatus @default(not_started)
+  completedAt      DateTime?
+  score            Decimal?         @db.Decimal(5, 2)
+  training         Training         @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  member           MemberProfile    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, memberId])
+}
+
+model Wallet {
+  id          BigInt          @id @default(autoincrement())
+  memberId    BigInt
+  walletType  WalletTypeEnum
+  balance     Decimal         @default(0) @db.Decimal(16, 2)
+  currency    String          @default("KES") @db.VarChar(10)
+  status      WalletStatus    @default(active)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  member      MemberProfile   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+  withdrawals WithdrawalRequest[]
+
+  @@unique([memberId, walletType])
+}
+
+model WalletTransaction {
+  id                BigInt         @id @default(autoincrement())
+  walletId          BigInt
+  transactionType   WalletTxnType
+  amount            Decimal        @db.Decimal(16, 2)
+  direction         TxnDirection
+  referenceType     String?        @db.VarChar(100)
+  referenceId       String?        @db.VarChar(100)
+  description       String?
+  status            ApprovalStatus @default(approved)
+  createdAt         DateTime       @default(now())
+  approvedByUserId  String?        @db.Uuid
+  wallet            Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  approvedBy        User?          @relation(fields: [approvedByUserId], references: [id])
+  commissionsPaid   Commission[]
+}
+
+model WithdrawalRequest {
+  id               BigInt           @id @default(autoincrement())
+  memberId         BigInt
+  walletId         BigInt
+  amount           Decimal          @db.Decimal(16, 2)
+  paymentMethod    PaymentMethodType
+  accountDetails   Json?
+  status           WithdrawalStatus @default(pending)
+  requestedAt      DateTime         @default(now())
+  reviewedByUserId String?          @db.Uuid
+  reviewedAt       DateTime?
+  notes            String?
+  member           MemberProfile    @relation(fields: [memberId], references: [id])
+  wallet           Wallet           @relation(fields: [walletId], references: [id])
+  reviewedBy       User?            @relation(fields: [reviewedByUserId], references: [id])
+}
+
+model ReferralCode {
+  id           BigInt         @id @default(autoincrement())
+  memberId     BigInt         @unique
+  referralCode String         @unique @db.VarChar(100)
+  referralLink String?
+  status       ApprovalStatus @default(approved)
+  createdAt    DateTime       @default(now())
+  member       MemberProfile  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  referrals    Referral[]
+}
+
+model Referral {
+  id               BigInt         @id @default(autoincrement())
+  sponsorMemberId  BigInt
+  referredMemberId BigInt         @unique
+  referralCodeId   BigInt?
+  level            Int            @default(1)
+  status           ReferralStatus @default(pending)
+  joinedAt         DateTime       @default(now())
+  sponsor          MemberProfile  @relation("ReferralSponsor", fields: [sponsorMemberId], references: [id])
+  referred         MemberProfile  @relation("ReferralReferred", fields: [referredMemberId], references: [id])
+  referralCode     ReferralCode?  @relation(fields: [referralCodeId], references: [id])
+
+  @@unique([sponsorMemberId, referredMemberId])
+}
+
+model CommissionPlan {
+  id           BigInt                  @id @default(autoincrement())
+  name         String                  @db.VarChar(150)
+  description  String?
+  triggerType  CommissionTriggerType
+  level        Int?
+  percentage   Decimal?                @db.Decimal(7, 4)
+  fixedAmount  Decimal?                @db.Decimal(14, 2)
+  status       ApprovalStatus          @default(approved)
+  createdAt    DateTime                @default(now())
+  commissions  Commission[]
+  products     Product[]
+}
+
+model Commission {
+  id                        BigInt            @id @default(autoincrement())
+  memberId                  BigInt
+  sourceMemberId            BigInt?
+  commissionPlanId          BigInt
+  referenceType             String?           @db.VarChar(100)
+  referenceId               String?           @db.VarChar(100)
+  level                     Int?
+  amount                    Decimal           @db.Decimal(16, 2)
+  status                    CommissionStatus  @default(pending)
+  earnedAt                  DateTime          @default(now())
+  approvedAt                DateTime?
+  paidWalletTransactionId   BigInt?
+  member                    MemberProfile     @relation("CommissionMember", fields: [memberId], references: [id])
+  sourceMember              MemberProfile?    @relation("CommissionSourceMember", fields: [sourceMemberId], references: [id])
+  commissionPlan            CommissionPlan    @relation(fields: [commissionPlanId], references: [id])
+  paidWalletTransaction     WalletTransaction? @relation(fields: [paidWalletTransactionId], references: [id])
+}
+
+model MlmTreeCache {
+  id                 BigInt         @id @default(autoincrement())
+  ancestorMemberId   BigInt
+  descendantMemberId BigInt
+  depth              Int
+  createdAt          DateTime       @default(now())
+  ancestor           MemberProfile  @relation("AncestorTree", fields: [ancestorMemberId], references: [id], onDelete: Cascade)
+  descendant         MemberProfile  @relation("DescendantTree", fields: [descendantMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([ancestorMemberId, descendantMemberId, depth])
+}
+
+model ContactMessage {
+  id          BigInt         @id @default(autoincrement())
+  name        String         @db.VarChar(200)
+  email       String?        @db.VarChar(200)
+  phone       String?        @db.VarChar(30)
+  subject     String?        @db.VarChar(200)
+  message     String
+  status      ApprovalStatus @default(pending)
+  submittedAt DateTime       @default(now())
+}
+
+model JoinRequest {
+  id               BigInt            @id @default(autoincrement())
+  fullName         String            @db.VarChar(200)
+  phone            String            @db.VarChar(30)
+  email            String?           @db.VarChar(200)
+  gender           GenderType?
+  branchInterest   String?           @db.VarChar(150)
+  referralCode     String?           @db.VarChar(100)
+  notes            String?
+  status           JoinRequestStatus @default(pending)
+  reviewedByUserId String?           @db.Uuid
+  reviewedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  reviewedBy       User?             @relation(fields: [reviewedByUserId], references: [id])
+}
+
+model Testimonial {
+  id               BigInt            @id @default(autoincrement())
+  memberId         BigInt?
+  title            String?           @db.VarChar(200)
+  message          String
+  mediaUrl         String?
+  isFeatured       Boolean           @default(false)
+  status           TestimonialStatus @default(pending)
+  approvedByUserId String?           @db.Uuid
+  publishedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  member           MemberProfile?    @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  approvedBy       User?             @relation(fields: [approvedByUserId], references: [id])
+}
+
+model WebsitePage {
+  id              BigInt      @id @default(autoincrement())
+  slug            String      @unique @db.VarChar(150)
+  title           String      @db.VarChar(200)
+  content         String?
+  metaTitle       String?     @db.VarChar(255)
+  metaDescription String?
+  status          PageStatus  @default(draft)
+  updatedByUserId String?     @db.Uuid
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  updatedBy       User?       @relation(fields: [updatedByUserId], references: [id])
+}
+
+model Product {
+  id               BigInt         @id @default(autoincrement())
+  name             String         @db.VarChar(200)
+  code             String?        @unique @db.VarChar(100)
+  description      String?
+  category         String?        @db.VarChar(100)
+  price            Decimal        @db.Decimal(14, 2)
+  commissionable   Boolean        @default(false)
+  commissionPlanId BigInt?
+  status           ApprovalStatus @default(approved)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  commissionPlan   CommissionPlan? @relation(fields: [commissionPlanId], references: [id])
+  orderItems       OrderItem[]
+}
+
+model Order {
+  id               BigInt             @id @default(autoincrement())
+  memberId         BigInt?
+  orderNumber      String             @unique @db.VarChar(100)
+  totalAmount      Decimal            @db.Decimal(14, 2)
+  paymentStatus    OrderPaymentStatus @default(pending)
+  orderStatus      OrderStatus        @default(draft)
+  paymentReference String?            @db.VarChar(150)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  member           MemberProfile?     @relation(fields: [memberId], references: [id])
+  items            OrderItem[]
+}
+
+model OrderItem {
+  id         BigInt   @id @default(autoincrement())
+  orderId    BigInt
+  productId  BigInt
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(14, 2)
+  totalPrice Decimal  @db.Decimal(14, 2)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+model SystemSetting {
+  id              BigInt    @id @default(autoincrement())
+  settingKey      String    @unique @db.VarChar(150)
+  settingValue    String?
+  description     String?
+  updatedByUserId String?   @db.Uuid
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  updatedBy       User?     @relation(fields: [updatedByUserId], references: [id])
+}
+
+model AuditLog {
+  id            BigInt    @id @default(autoincrement())
+  userId        String?   @db.Uuid
+  action        String    @db.VarChar(150)
+  module        String    @db.VarChar(100)
+  referenceType String?   @db.VarChar(100)
+  referenceId   String?   @db.VarChar(100)
+  oldValues     Json?
+  newValues     Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id        BigInt             @id @default(autoincrement())
+  userId    String?            @db.Uuid
+  title     String             @db.VarChar(200)
+  message   String
+  channel   NotificationChannel @default(in_app)
+  status    NotificationStatus @default(pending)
+  sentAt    DateTime?
+  createdAt DateTime           @default(now())
+  user      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
