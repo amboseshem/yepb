@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -34,31 +35,22 @@ export async function POST(req: Request) {
 
     const memberId = member.id;
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.referral.deleteMany({
         where: {
-          OR: [
-            { sponsorMemberId: memberId },
-            { referredMemberId: memberId },
-          ],
+          OR: [{ sponsorMemberId: memberId }, { referredMemberId: memberId }],
         },
       });
 
       await tx.mlmTreeCache.deleteMany({
         where: {
-          OR: [
-            { ancestorMemberId: memberId },
-            { descendantMemberId: memberId },
-          ],
+          OR: [{ ancestorMemberId: memberId }, { descendantMemberId: memberId }],
         },
       });
 
       await tx.commission.deleteMany({
         where: {
-          OR: [
-            { memberId },
-            { sourceMemberId: memberId },
-          ],
+          OR: [{ memberId }, { sourceMemberId: memberId }],
         },
       });
 
@@ -158,15 +150,18 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.redirect(new URL("/dashboard/users-access", req.url));
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("DELETE MEMBER ERROR:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Failed to delete member.";
 
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Failed to delete member.",
+        message,
       },
-      { status: error?.message === "Forbidden" ? 403 : 500 }
+      { status: message === "Forbidden" ? 403 : 500 }
     );
   }
 }
