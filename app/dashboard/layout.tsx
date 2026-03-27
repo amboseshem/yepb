@@ -59,7 +59,7 @@ export default async function DashboardLayout({
               Role: {role || "-"}
             </p>
             <p className="text-blue-100">
-              Branch: {user?.memberProfile?.branch?.name ?? "-"}
+              Branch: {"-"}
             </p>
           </div>
         </div>
