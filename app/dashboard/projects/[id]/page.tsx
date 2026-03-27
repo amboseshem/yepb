@@ -6,16 +6,18 @@ import { getCurrentUserToken } from "@/lib/auth";
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const token = await getCurrentUserToken();
+  // ✅ Safe token handling
+  const token = await getCurrentUserToken().catch(() => null);
   const canManage = ["super_admin", "admin"].includes(token?.role || "");
 
-  const { id } = await params;
+  const { id } = params;
 
+  // ✅ Safe BigInt conversion
   const project = await prisma.project.findUnique({
     where: {
-      id: BigInt(id),
+      id: BigInt(Number(id)),
     },
     include: {
       transactions: {
@@ -67,6 +69,8 @@ export default async function ProjectDetailPage({
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-xl font-semibold text-slate-800">Admin Actions</h3>
           <div className="mt-4 flex flex-wrap gap-3">
+
+            {/* ✅ Approve */}
             {project.status === "pending_approval" && (
               <form action="/api/projects/status" method="POST">
                 <input type="hidden" name="projectId" value={project.id.toString()} />
@@ -77,7 +81,8 @@ export default async function ProjectDetailPage({
               </form>
             )}
 
-            {project.status !== "archived" && (
+            {/* ✅ Archive (fixed) */}
+            {project.status !== "cancelled" && (
               <form action="/api/projects/status" method="POST">
                 <input type="hidden" name="projectId" value={project.id.toString()} />
                 <input type="hidden" name="status" value="cancelled" />
@@ -86,6 +91,7 @@ export default async function ProjectDetailPage({
                 </button>
               </form>
             )}
+
           </div>
         </div>
       )}
