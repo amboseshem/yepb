@@ -9,7 +9,7 @@ type TokenPayload = {
 };
 
 export async function getCurrentUserToken(): Promise<TokenPayload | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies(); // ✅ FIXED HERE
   const token = cookieStore.get("token")?.value;
 
   if (!token) return null;
@@ -25,7 +25,6 @@ export async function getCurrentUserToken(): Promise<TokenPayload | null> {
     return null;
   }
 }
-
 export async function getCurrentUser() {
   const token = await getCurrentUserToken();
   if (!token) return null;
