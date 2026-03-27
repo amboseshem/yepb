@@ -9,7 +9,7 @@ type TokenPayload = {
 };
 
 export async function getCurrentUserToken(): Promise<TokenPayload | null> {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const token = cookieStore.get("token")?.value;
 
   if (!token) return null;
@@ -31,9 +31,8 @@ export async function getCurrentUser() {
   if (!token) return null;
 
   return prisma.user.findUnique({
-    where: { id: token.userId },
+    where: { id: BigInt(token.userId) },
     include: {
-      role: true,
       memberProfile: {
         include: {
           branch: true,
