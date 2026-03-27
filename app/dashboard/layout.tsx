@@ -56,7 +56,7 @@ export default async function DashboardLayout({
               Logged in as: {user?.fullName ?? "Unknown User"}
             </p>
             <p className="text-blue-100">
-              Role: {(user?.role?.name ?? role) || "-"}
+              Role: {role || "-"}
             </p>
             <p className="text-blue-100">
               Branch: {user?.memberProfile?.branch?.name ?? "-"}
