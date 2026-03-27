@@ -33,7 +33,7 @@ export async function getCurrentUser() {
   return prisma.user.findUnique({
   where: { id: BigInt(token.userId) },
   include: {
-    role: true, // ✅ ADD THIS
+    role: true,
     memberProfile: {
       include: {
         branch: true,
