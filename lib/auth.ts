@@ -30,16 +30,16 @@ export async function getCurrentUser() {
   if (!token) return null;
 
   return prisma.user.findUnique({
-  where: { id: BigInt(token.userId) },
-  include: {
-    role: true,
-    memberProfile: {
-      include: {
-        branch: true,
+    where: { id: token.userId }, // ✅ FIXED
+    include: {
+      role: true,
+      memberProfile: {
+        include: {
+          branch: true,
+        },
       },
     },
-  },
-});
+  });
 }
 
 export async function requireRole(allowedRoles: string[]) {
