@@ -25,7 +25,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const isValid = await bcrypt.compare(password, user.password);
+    // ✅ FIXED HERE
+    const isValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValid) {
       return NextResponse.json(
@@ -34,18 +35,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ CREATE TOKEN
     const token = jwt.sign(
       {
         userId: user.id.toString(),
         phone: user.phone,
-        role: user.role,
+        role: user.roleId, // adjust if needed
       },
       process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
     );
 
-    // ✅ SET COOKIE
     const response = NextResponse.json({
       message: "Login successful",
     });
