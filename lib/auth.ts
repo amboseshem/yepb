@@ -42,3 +42,17 @@ export async function getCurrentUser() {
     },
   });
 }
+
+export async function requireRole(allowedRoles: string[]) {
+  const token = await getCurrentUserToken();
+
+  if (!token) {
+    throw new Error("Unauthorized");
+  }
+
+  if (!allowedRoles.includes(token.role)) {
+    throw new Error("Forbidden");
+  }
+
+  return token;
+}
