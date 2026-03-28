@@ -9,7 +9,7 @@ type TokenPayload = {
 };
 
 export async function getCurrentUserToken(): Promise<TokenPayload | null> {
-  const cookieStore = await cookies(); // ✅ FIXED HERE
+  const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
   if (!token) return null;
@@ -25,12 +25,13 @@ export async function getCurrentUserToken(): Promise<TokenPayload | null> {
     return null;
   }
 }
+
 export async function getCurrentUser() {
   const token = await getCurrentUserToken();
   if (!token) return null;
 
   return prisma.user.findUnique({
-    where: { id: token.userId }, // ✅ FIXED
+    where: { id: token.userId },
     include: {
       role: true,
       memberProfile: {
@@ -40,18 +41,4 @@ export async function getCurrentUser() {
       },
     },
   });
-}
-
-export async function requireRole(allowedRoles: string[]) {
-  const token = await getCurrentUserToken();
-
-  if (!token) {
-    throw new Error("Unauthorized");
-  }
-
-  if (!allowedRoles.includes(token.role)) {
-    throw new Error("Forbidden");
-  }
-
-  return token;
 }

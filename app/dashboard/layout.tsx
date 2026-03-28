@@ -10,7 +10,6 @@ export default async function DashboardLayout({
   const token = await getCurrentUserToken();
   const user = await getCurrentUser();
 
-  // ✅ Ensure role is always string
   const role = token?.role ? String(token.role) : "";
 
   const navItems = [
@@ -20,24 +19,15 @@ export default async function DashboardLayout({
     { href: "/dashboard/projects", label: "Projects", roles: ["super_admin", "admin", "leader"] },
     { href: "/dashboard/projects/transactions", label: "Project Transactions", roles: ["super_admin", "admin", "leader"] },
     { href: "/dashboard/welfare", label: "Welfare", roles: ["super_admin", "admin", "treasurer", "leader"] },
-    { href: "/dashboard/welfare/disburse", label: "Welfare Disbursement", roles: ["super_admin", "admin", "treasurer"] },
     { href: "/dashboard/training", label: "Training", roles: ["super_admin", "admin", "trainer", "leader"] },
     { href: "/dashboard/wallets", label: "Wallets", roles: ["super_admin", "admin", "treasurer"] },
-    { href: "/dashboard/wallets/transactions", label: "Wallet Transactions", roles: ["super_admin", "admin", "treasurer"] },
-    { href: "/dashboard/wallets/withdrawals", label: "Withdrawals", roles: ["super_admin", "admin", "treasurer"] },
     { href: "/dashboard/referrals", label: "Referrals", roles: ["super_admin", "admin"] },
-    { href: "/dashboard/referrals/codes", label: "Referral Codes", roles: ["super_admin", "admin"] },
-    { href: "/dashboard/referrals/generate", label: "Generate Code", roles: ["super_admin", "admin"] },
     { href: "/dashboard/commissions", label: "Commissions", roles: ["super_admin", "admin"] },
-    { href: "/dashboard/commissions/plans", label: "Commission Plans", roles: ["super_admin", "admin"] },
-    { href: "/dashboard/mlm", label: "MLM Summary", roles: ["super_admin", "admin"] },
     { href: "/dashboard/reports", label: "Reports", roles: ["super_admin", "admin", "leader"] },
-    { href: "/dashboard/reports/print", label: "Printable Reports", roles: ["super_admin", "admin", "leader"] },
     { href: "/dashboard/users-access", label: "Users & Access", roles: ["super_admin", "admin"] },
     { href: "/dashboard/settings", label: "Settings", roles: ["super_admin", "admin"] },
   ];
 
-  // ✅ Safe filtering
   const visibleNavItems = navItems.filter((item) =>
     item.roles.includes(role)
   );
@@ -66,17 +56,16 @@ export default async function DashboardLayout({
             </p>
 
             <p className="text-blue-100">
-              Role: {role || "-"}
+              Role: {user?.role?.name || role || "-"}
             </p>
 
-            {/* ❌ Removed broken relation */}
             <p className="text-blue-100">
-              Branch: {"-"}
+              Branch: {user?.memberProfile?.branch?.name || "-"}
             </p>
           </div>
         </div>
 
-        {/* NAVIGATION */}
+        {/* NAV */}
         <nav className="space-y-2 max-h-[78vh] overflow-y-auto pr-1">
           {visibleNavItems.length === 0 ? (
             <p className="text-sm text-blue-100 px-2">
@@ -108,12 +97,12 @@ export default async function DashboardLayout({
             </p>
           </div>
 
-          <a
-            href="/api/auth/logout"
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition"
-          >
-            Logout
-          </a>
+          {/* LOGOUT */}
+          <form action="/api/auth/logout" method="GET">
+            <button className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition">
+              Logout
+            </button>
+          </form>
         </header>
 
         <main className="p-6">{children}</main>

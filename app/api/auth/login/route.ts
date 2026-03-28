@@ -16,6 +16,7 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.findUnique({
       where: { phone },
+      include: { role: true },
     });
 
     if (!user) {
@@ -25,7 +26,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ FIXED HERE
     const isValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValid) {
@@ -37,9 +37,9 @@ export async function POST(req: Request) {
 
     const token = jwt.sign(
       {
-        userId: user.id.toString(),
+        userId: user.id,
         phone: user.phone,
-        role: String(user.roleId),
+        role: user.role?.code || "member",
       },
       process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
@@ -49,16 +49,17 @@ export async function POST(req: Request) {
       message: "Login successful",
     });
 
-   response.cookies.set("token", token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: "lax", // ✅ IMPORTANT
-  path: "/",
-});
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+    });
 
     return response;
   } catch (error) {
     console.error("LOGIN ERROR:", error);
+
     return NextResponse.json(
       { message: "Server error" },
       { status: 500 }
