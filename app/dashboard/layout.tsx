@@ -9,7 +9,9 @@ export default async function DashboardLayout({
 }) {
   const token = await getCurrentUserToken();
   const user = await getCurrentUser();
-  const role = token?.role || "";
+
+  // ✅ Ensure role is always string
+  const role = token?.role ? String(token.role) : "";
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", roles: ["super_admin", "admin", "leader", "member", "trainer", "treasurer"] },
@@ -35,10 +37,14 @@ export default async function DashboardLayout({
     { href: "/dashboard/settings", label: "Settings", roles: ["super_admin", "admin"] },
   ];
 
-  const visibleNavItems = navItems.filter((item) => item.roles.includes(role));
+  // ✅ Safe filtering
+  const visibleNavItems = navItems.filter((item) =>
+    item.roles.includes(role)
+  );
 
   return (
     <div className="min-h-screen flex bg-slate-50">
+      {/* SIDEBAR */}
       <aside className="w-72 bg-gradient-to-b from-blue-700 via-purple-700 to-blue-900 text-white p-5 shadow-xl">
         <div className="mb-8">
           <div className="mb-3 flex items-center gap-3">
@@ -47,43 +53,59 @@ export default async function DashboardLayout({
             </div>
             <div>
               <h2 className="text-2xl font-bold">YEP Admin</h2>
-              <p className="text-sm text-blue-100">Youth Empowerment Platform</p>
+              <p className="text-sm text-blue-100">
+                Youth Empowerment Platform
+              </p>
             </div>
           </div>
 
+          {/* USER INFO */}
           <div className="rounded-2xl bg-white/10 p-3 text-sm">
             <p className="font-semibold">
               Logged in as: {user?.fullName ?? "Unknown User"}
             </p>
+
             <p className="text-blue-100">
               Role: {role || "-"}
             </p>
+
+            {/* ❌ Removed broken relation */}
             <p className="text-blue-100">
               Branch: {"-"}
             </p>
           </div>
         </div>
 
+        {/* NAVIGATION */}
         <nav className="space-y-2 max-h-[78vh] overflow-y-auto pr-1">
-          {visibleNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="block rounded-xl px-4 py-3 text-sm font-medium bg-white/10 hover:bg-white/20 transition"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {visibleNavItems.length === 0 ? (
+            <p className="text-sm text-blue-100 px-2">
+              No access available
+            </p>
+          ) : (
+            visibleNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="block rounded-xl px-4 py-3 text-sm font-medium bg-white/10 hover:bg-white/20 transition"
+              >
+                {item.label}
+              </Link>
+            ))
+          )}
         </nav>
       </aside>
 
+      {/* MAIN */}
       <div className="flex-1">
         <header className="border-b border-slate-200 bg-white px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">
               Youth Empowerment Platform
             </h1>
-            <p className="text-sm text-slate-500">Administration Portal</p>
+            <p className="text-sm text-slate-500">
+              Administration Portal
+            </p>
           </div>
 
           <a
