@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       {
         userId: user.id.toString(),
         phone: user.phone,
-        role: user.roleId, // adjust if needed
+        role: String(user.roleId),
       },
       process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
@@ -49,12 +49,12 @@ export async function POST(req: Request) {
       message: "Login successful",
     });
 
-    response.cookies.set("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      path: "/",
-    });
+   response.cookies.set("token", token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "lax", // ✅ IMPORTANT
+  path: "/",
+});
 
     return response;
   } catch (error) {
