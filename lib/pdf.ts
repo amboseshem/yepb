@@ -1,43 +1,51 @@
 import PDFDocument from "pdfkit";
 
-export function generateReceipt(data: any) {
-  const doc = new PDFDocument({ margin: 40 });
+export function generateReceipt(data: any): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: "A4",
+        margin: 50,
+      });
 
-  // HEADER
-  doc.rect(0, 0, 600, 80).fill("#1e40af");
+      const buffers: any[] = [];
 
-  doc
-    .fillColor("white")
-    .fontSize(20)
-    .text("YOUTH EMPOWERMENT PLATFORM", 50, 30);
+      doc.on("data", buffers.push.bind(buffers));
+      doc.on("end", () => {
+        resolve(Buffer.concat(buffers));
+      });
 
-  // LOGO (optional)
-  try {
-    doc.image("public/logo.png", 450, 20, { width: 50 });
-  } catch {}
+      // HEADER
+      doc
+        .fontSize(20)
+        .fillColor("#1e3a8a")
+        .text("YOUTH EMPOWERMENT PLATFORM", {
+          align: "center",
+        });
 
-  doc.moveDown(3);
+      doc.moveDown();
 
-  // TITLE
-  doc.fillColor("black").fontSize(16).text("Payment Receipt", {
-    align: "center",
+      doc
+        .fontSize(14)
+        .fillColor("black")
+        .text("OFFICIAL RECEIPT", { align: "center" });
+
+      doc.moveDown();
+
+      // DETAILS
+      doc.fontSize(12);
+      doc.text(`Name: ${data.name}`);
+      doc.text(`Amount: KES ${data.amount}`);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`);
+
+      doc.moveDown();
+      doc.text("Thank you for your contribution!", {
+        align: "center",
+      });
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
   });
-
-  doc.moveDown();
-
-  // CONTENT
-  doc.fontSize(12);
-  doc.text(`Name: ${data.name}`);
-  doc.text(`Amount: KES ${data.amount}`);
-  doc.text(`Date: ${new Date().toLocaleDateString()}`);
-
-  doc.moveDown();
-
-  doc.text("Thank you for your contribution!", {
-    align: "center",
-  });
-
-  doc.end();
-
-  return doc;
 }

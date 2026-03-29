@@ -1,43 +1,16 @@
-import PDFDocument from "pdfkit";
+import { generateReceipt } from "@/lib/pdf";
 
 export async function GET() {
   try {
-    const doc = new PDFDocument();
-
-    const chunks: Uint8Array[] = [];
-
-    doc.on("data", (chunk) => chunks.push(chunk));
-    doc.on("end", () => {});
-
-    // HEADER
-    doc.fontSize(20).text("YOUTH EMPOWERMENT PLATFORM", {
-      align: "center",
+    const pdfBuffer = await generateReceipt({
+      name: "System User",
+      amount: 500,
     });
-
-    doc.moveDown();
-
-    doc.fontSize(14).text("Payment Receipt", {
-      align: "center",
-    });
-
-    doc.moveDown();
-
-    doc.fontSize(12).text("Name: Sample User");
-    doc.text("Amount: KES 500");
-    doc.text("Date: " + new Date().toLocaleDateString());
-
-    doc.moveDown();
-    doc.text("Thank you!", { align: "center" });
-
-    doc.end();
-
-    await new Promise((resolve) => doc.on("end", resolve));
-
-    const pdfBuffer = Buffer.concat(chunks);
 
     return new Response(pdfBuffer, {
       headers: {
         "Content-Type": "application/pdf",
+        "Content-Disposition": "inline; filename=receipt.pdf",
       },
     });
   } catch (error) {
