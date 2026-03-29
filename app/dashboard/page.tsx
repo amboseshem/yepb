@@ -6,15 +6,17 @@ import TrainerDashboard from "./roles/TrainerDashboard";
 export default async function DashboardPage() {
   const user = await getToken();
 
-  if (!user) return <div>Unauthorized</div>;
-
-  if (user.role === "super_admin" || user.role === "admin") {
-    return <AdminDashboard />;
+  if (!user) {
+    return <div className="p-6">Unauthorized</div>;
   }
 
   if (user.role === "trainer") {
     return <TrainerDashboard />;
   }
 
-  return <MemberDashboard />;
+  if (user.role === "member") {
+    return <MemberDashboard />;
+  }
+
+  return <AdminDashboard />;
 }
