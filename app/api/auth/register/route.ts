@@ -9,10 +9,7 @@ export async function POST(req: Request) {
     const { fullName, phone, password } = body;
 
     if (!fullName || !phone || !password) {
-      return NextResponse.json(
-        { message: "Missing fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Missing fields" }, { status: 400 });
     }
 
     const existing = await prisma.user.findUnique({
@@ -28,32 +25,33 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ GET MEMBER ROLE
     const role = await prisma.role.findFirst({
       where: { code: "member" },
     });
 
-    // ✅ CREATE USER AS PENDING
     const newUser = await prisma.user.create({
       data: {
         fullName,
         phone,
         passwordHash: hashedPassword,
         role: {
-          connect: { id: role?.id }, // ✅ FIXED
+          connect: { id: role!.id },
         },
-        status: "pending", // 🔥 NEW LOGIC
+        status: "pending",
       },
     });
 
-    // ✅ CREATE MEMBER PROFILE
+    // ✅ GENERATE MEMBER NUMBER
+    const memberNumber = "MBR-" + Date.now();
+
     await prisma.memberProfile.create({
       data: {
         userId: newUser.id,
+        memberNumber, // ✅ FIXED
       },
     });
 
-    // ✅ REFERRAL (IF EXISTS)
+    // ✅ REFERRAL PROCESS
     const url = new URL(req.url);
     const refCode = url.searchParams.get("ref");
 
@@ -62,13 +60,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      message: "Registered successfully. Await approval after payment.",
+      message: "Registered successfully. Await payment approval.",
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { message: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }

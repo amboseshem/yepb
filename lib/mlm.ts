@@ -7,7 +7,7 @@ export async function processReferral(newMemberId: number, refCode: string) {
 
   if (!ref) return;
 
-  // LEVEL 1 (100)
+  // LEVEL 1
   await prisma.commission.create({
     data: {
       memberId: ref.memberId,
@@ -16,24 +16,21 @@ export async function processReferral(newMemberId: number, refCode: string) {
     },
   });
 
-  // LEVEL 2 (50)
-  const parentRef = await prisma.referral.findFirst({
+  // LEVEL 2
+  const parent = await prisma.referral.findFirst({
     where: { referredMemberId: ref.memberId },
   });
 
-  if (parentRef) {
+  if (parent) {
     await prisma.commission.create({
       data: {
-        memberId: parentRef.sponsorMemberId,
+        memberId: parent.sponsorMemberId,
         amount: 50,
         status: "pending",
       },
     });
   }
 
-  // SYSTEM RETAINS 350 (no DB needed unless you want ledger)
-
-  // SAVE REFERRAL RELATION
   await prisma.referral.create({
     data: {
       sponsorMemberId: ref.memberId,
