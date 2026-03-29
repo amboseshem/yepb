@@ -13,12 +13,13 @@
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.6",
+    "nodemailer": "^8.0.4",
+    "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {
-    "prisma": "^5.22.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
@@ -28,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "postcss": "^8.5.8",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4.2.1",
     "tsx": "^4.20.5",
     "typescript": "^5"
