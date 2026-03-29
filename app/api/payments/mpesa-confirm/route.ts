@@ -1,40 +1,29 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { getToken } from "@/lib/core";
 
-import { useState } from "react";
+export async function POST(req: Request) {
+  try {
+    const user = await getToken();
 
-export default function MpesaPage() {
-  const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
+    if (!user) {
+      return new Response("Unauthorized", { status: 401 });
+    }
 
-  const submit = async () => {
-    const res = await fetch("/api/payments/mpesa-confirm", {
-      method: "POST",
-      body: JSON.stringify({ transactionCode: code }),
+    const { transactionCode } = await req.json();
+
+    if (!transactionCode) {
+      return new Response("Transaction code required", { status: 400 });
+    }
+
+    // ✅ ACTIVATE USER
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: { status: "active" },
     });
 
-    const text = await res.text();
-    setMessage(text);
-  };
-
-  return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold">Submit Mpesa Payment</h1>
-
-      <input
-        placeholder="Enter Mpesa Code"
-        className="border p-3 mt-4"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-      />
-
-      <button
-        onClick={submit}
-        className="block mt-3 bg-green-600 text-white px-4 py-2 rounded"
-      >
-        Submit
-      </button>
-
-      {message && <p className="mt-3">{message}</p>}
-    </div>
-  );
+    return new Response("Payment received. Account activated.");
+  } catch (error) {
+    console.error(error);
+    return new Response("Server error", { status: 500 });
+  }
 }
