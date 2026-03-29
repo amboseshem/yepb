@@ -94,3 +94,10 @@ export default async function ReportsPage() {
     </div>
   );
 }
+<a
+  href="/api/receipt"
+  target="_blank"
+  className="bg-blue-600 text-white px-4 py-2 rounded"
+>
+  Print PDF
+</a>
