@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-
+<p className="text-yellow-600 mt-3">
+  Your account is pending. Pay KES 500 and submit transaction code for activation.
+</p>
 export default function MemberDashboard() {
   const [link, setLink] = useState("");
 
