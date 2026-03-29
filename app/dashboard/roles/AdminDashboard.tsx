@@ -9,11 +9,11 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-2 gap-4 mt-5">
         <div className="bg-blue-500 text-white p-5 rounded">
-          Users: {stats.users}
+          Users: {Number(stats.users)}
         </div>
 
         <div className="bg-green-500 text-white p-5 rounded">
-          Contributions: KES {stats.totalContributions}
+          Contributions: KES {Number(stats.totalContributions).toLocaleString()}
         </div>
       </div>
     </div>
