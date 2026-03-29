@@ -29,18 +29,24 @@ export default function MemberDashboard() {
         </button>
       </div>
 
-      {link && (
-        <div className="mt-4">
-          <p className="text-sm">{link}</p>
+     {link && (
+  <div className="mt-4">
+    <p className="text-sm">{link}</p>
 
-          <button
-            onClick={copy}
-            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Copy Link
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+    <button
+      onClick={copy}
+      className="mt-2 bg-blue-600 text-white px-4 py-2 rounded"
+    >
+      Copy Link
+    </button>
+
+    {/* ✅ WHATSAPP BUTTON HERE */}
+    <a
+      href={`https://wa.me/?text=${encodeURIComponent(link)}`}
+      target="_blank"
+      className="block mt-2 bg-green-600 text-white px-4 py-2 rounded"
+    >
+      Share on WhatsApp
+    </a>
+  </div>
+)}
