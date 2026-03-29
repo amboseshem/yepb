@@ -33,71 +33,76 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-slate-800">Reports</h2>
-        <p className="mt-1 text-slate-500">
-          High-level reporting across members, finances, projects, welfare,
-          training, and MLM.
-        </p>
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-800">Reports</h2>
+          <p className="mt-1 text-slate-500">
+            Full system analytics overview
+          </p>
+        </div>
+
+        {/* ✅ PRINT BUTTON (CORRECT PLACE) */}
+        <a
+          href="/api/receipt"
+          target="_blank"
+          className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow"
+        >
+          Print PDF
+        </a>
       </div>
 
+      {/* CARDS */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl bg-blue-600 p-5 text-white shadow">
-          <p className="text-sm text-blue-100">Members</p>
-          <h3 className="mt-2 text-3xl font-bold">{totalMembers}</h3>
+          Members
+          <h3 className="text-3xl font-bold">{totalMembers}</h3>
         </div>
 
         <div className="rounded-2xl bg-green-600 p-5 text-white shadow">
-          <p className="text-sm text-green-100">Contributions</p>
-          <h3 className="mt-2 text-3xl font-bold">{totalContributions}</h3>
+          Contributions
+          <h3 className="text-3xl font-bold">{totalContributions}</h3>
         </div>
 
         <div className="rounded-2xl bg-purple-600 p-5 text-white shadow">
-          <p className="text-sm text-purple-100">Projects</p>
-          <h3 className="mt-2 text-3xl font-bold">{totalProjects}</h3>
+          Projects
+          <h3 className="text-3xl font-bold">{totalProjects}</h3>
         </div>
 
         <div className="rounded-2xl bg-red-600 p-5 text-white shadow">
-          <p className="text-sm text-red-100">Welfare Requests</p>
-          <h3 className="mt-2 text-3xl font-bold">{totalWelfareRequests}</h3>
+          Welfare
+          <h3 className="text-3xl font-bold">{totalWelfareRequests}</h3>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-slate-800">Financial Totals</h3>
-          <div className="mt-4 space-y-3 text-sm">
-            <p>
-              <span className="font-semibold">Contribution Amount:</span> KES{" "}
-              {Number(contributionSum._sum.amount || 0).toLocaleString()}
-            </p>
-            <p>
-              <span className="font-semibold">Project Budget:</span> KES{" "}
-              {Number(projectBudgetSum._sum.budgetAmount || 0).toLocaleString()}
-            </p>
-            <p>
-              <span className="font-semibold">Welfare Requested:</span> KES{" "}
-              {Number(welfareAmountSum._sum.amountRequested || 0).toLocaleString()}
-            </p>
-          </div>
-        </div>
+      {/* FINANCIAL */}
+      <div className="rounded-2xl bg-white p-6 shadow">
+        <h3 className="font-bold mb-3">Financial Summary</h3>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-slate-800">Growth Metrics</h3>
-          <div className="mt-4 space-y-3 text-sm">
-            <p><span className="font-semibold">Training Records:</span> {totalTrainings}</p>
-            <p><span className="font-semibold">Referrals:</span> {totalReferrals}</p>
-            <p><span className="font-semibold">Commissions:</span> {totalCommissions}</p>
-          </div>
-        </div>
+        <p>
+          Contributions: KES{" "}
+          {Number(contributionSum._sum.amount || 0).toLocaleString()}
+        </p>
+
+        <p>
+          Project Budget: KES{" "}
+          {Number(projectBudgetSum._sum.budgetAmount || 0).toLocaleString()}
+        </p>
+
+        <p>
+          Welfare: KES{" "}
+          {Number(welfareAmountSum._sum.amountRequested || 0).toLocaleString()}
+        </p>
+      </div>
+
+      {/* MLM */}
+      <div className="rounded-2xl bg-white p-6 shadow">
+        <h3 className="font-bold mb-3">Growth Metrics</h3>
+
+        <p>Trainings: {totalTrainings}</p>
+        <p>Referrals: {totalReferrals}</p>
+        <p>Commissions: {totalCommissions}</p>
       </div>
     </div>
   );
 }
-<a
-  href="/api/receipt"
-  target="_blank"
-  className="bg-blue-600 text-white px-4 py-2 rounded"
->
-  Print PDF
-</a>
