@@ -45,3 +45,18 @@ export async function getFullUser() {
     },
   });
 }
+
+/* DASHBOARD STATS */
+
+export async function getDashboardStats() {
+  const users = await prisma.user.count();
+
+  const contributions = await prisma.contribution.aggregate({
+    _sum: { amount: true },
+  });
+
+  return {
+    users,
+    totalContributions: contributions._sum.amount || 0,
+  };
+}
