@@ -72,13 +72,14 @@ export async function GET() {
       color: rgb(0.5, 0.5, 0.5),
     });
 
-    const pdfBytes = await pdfDoc.save();
+const pdfBytes = await pdfDoc.save();
+const buffer = Buffer.from(pdfBytes);
 
-    return new NextResponse(pdfBytes, {
-      headers: {
-        "Content-Type": "application/pdf",
-      },
-    });
+return new NextResponse(buffer, {
+  headers: {
+    "Content-Type": "application/pdf",
+  },
+});
   } catch (error) {
     console.error(error);
     return NextResponse.json(
