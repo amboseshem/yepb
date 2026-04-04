@@ -136,9 +136,6 @@ pendingMembers = await prisma.memberProfile.count({
   where: { membershipStatus: "pending" },
 });
 
-archivedMembers = await prisma.memberProfile.count({
-  where: { membershipStatus: "archived" },
-});
   totalTrainings = await prisma.training.count();
   totalCommissions = await prisma.commission.count();
 
