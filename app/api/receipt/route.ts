@@ -128,17 +128,17 @@ let totalTrainings = 0;
 let totalCommissions = 0;
 
 try {
-  activeMembers = await prisma.memberProfile.count({
-    where: { membershipStatus: "active" },
-  });
+ activeMembers = await prisma.memberProfile.count({
+  where: { membershipStatus: "ACTIVE" },
+});
 
-  pendingMembers = await prisma.memberProfile.count({
-    where: { membershipStatus: "pending" },
-  });
+pendingMembers = await prisma.memberProfile.count({
+  where: { membershipStatus: "PENDING" },
+});
 
-  archivedMembers = await prisma.memberProfile.count({
-    where: { membershipStatus: "archived" },
-  });
+archivedMembers = await prisma.memberProfile.count({
+  where: { membershipStatus: "ARCHIVED" },
+});
 
   totalTrainings = await prisma.training.count();
   totalCommissions = await prisma.commission.count();
