@@ -284,17 +284,20 @@ financeRows.forEach((row, i) => {
 
   tableY -= 25;
 });
-    // =========================
-    // 🏢 COMPANY PROFILE
-    // =========================
-    y -= 40;
+   // =========================
+// 🏢 COMPANY PROFILE
+// =========================
 
-    page.drawText("About YEP Platform", {
-      x: 50,
-      y,
-      size: 14,
-      font: bold,
-    });
+let y = tableY; // ✅ FIX ADDED HERE
+
+y -= 40;
+
+page.drawText("About YEP Platform", {
+  x: 50,
+  y,
+  size: 14,
+  font: bold,
+});
 
     y -= 20;
 
