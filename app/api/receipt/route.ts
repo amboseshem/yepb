@@ -7,44 +7,86 @@ import {
   StandardFonts,
   rgb,
 } from "pdf-lib";
+import fs from "fs";
+import path from "path";
 
 export async function GET() {
   try {
-    // 📊 DATA
+    // =========================
+    // 📊 FETCH DATA
+    // =========================
     let totalMembers = 0;
     let totalContributions = 0;
     let totalProjects = 0;
+    let totalAmount = 0;
+    let transactions: any[] = [];
 
     try {
       totalMembers = await prisma.memberProfile.count();
       totalContributions = await prisma.contribution.count();
       totalProjects = await prisma.project.count();
+
+      const sum = await prisma.contribution.aggregate({
+        _sum: { amount: true },
+      });
+
+      totalAmount = Number(sum._sum.amount || 0);
+
+      transactions = await prisma.contribution.findMany({
+        take: 30, // multi-page
+        orderBy: { createdAt: "desc" },
+        include: {
+          member: {
+            include: { user: true },
+          },
+        },
+      });
     } catch (e) {
       console.log("DB error:", e);
     }
 
-    // 📄 PDF
+    // =========================
+    // 📄 CREATE PDF
+    // =========================
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([600, 800]);
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    const { width, height } = page.getSize();
+    // =========================
+    // 🖼 LOAD LOGO
+    // =========================
+    const logoPath = path.join(process.cwd(), "public/logo.png");
+    const logoBytes = fs.readFileSync(logoPath);
+    const logoImage = await pdfDoc.embedPng(logoBytes);
 
-    // 🎨 HEADER BACKGROUND
+    // =========================
+    // 🧾 PAGE 1 (SUMMARY)
+    // =========================
+    let page = pdfDoc.addPage([600, 800]);
+    let { width, height } = page.getSize();
+
+    // 🔵 HEADER
     page.drawRectangle({
       x: 0,
       y: height - 100,
-      width: width,
+      width,
       height: 100,
-      color: rgb(0.1, 0.35, 0.9),
+      color: rgb(0, 0.3, 0.8),
     });
 
-    // 🏷 TITLE
+    // 🖼 BIG LOGO
+    page.drawImage(logoImage, {
+      x: 30,
+      y: height - 90,
+      width: 70,
+      height: 70,
+    });
+
+    // TITLE
     page.drawText("YEP PLATFORM REPORT", {
-      x: 180,
-      y: height - 60,
+      x: 120,
+      y: height - 55,
       size: 18,
       font: bold,
       color: rgb(1, 1, 1),
@@ -56,110 +98,70 @@ export async function GET() {
       y: height - 120,
       size: 10,
       font,
-      color: rgb(0.4, 0.4, 0.4),
     });
 
-    // 🔹 SECTION TITLE
+    // 🔴 SUMMARY TITLE
     page.drawText("System Summary", {
       x: 50,
-      y: height - 160,
+      y: height - 150,
       size: 14,
       font: bold,
+      color: rgb(1, 0, 0),
     });
 
-    // 📊 TABLE HEADER
-    let startY = height - 190;
+    let y = height - 180;
 
-    page.drawRectangle({
-      x: 50,
-      y: startY,
-      width: 500,
-      height: 25,
-      color: rgb(0.2, 0.6, 1),
-    });
-
-    page.drawText("Metric", {
-      x: 60,
-      y: startY + 7,
-      size: 12,
-      font: bold,
-      color: rgb(1, 1, 1),
-    });
-
-    page.drawText("Value", {
-      x: 400,
-      y: startY + 7,
-      size: 12,
-      font: bold,
-      color: rgb(1, 1, 1),
-    });
-
-    // 📋 TABLE ROWS
-    const rows = [
-      ["Total Members", totalMembers],
-      ["Total Contributions", totalContributions],
-      ["Total Projects", totalProjects],
+    const summary = [
+      ["Members", totalMembers],
+      ["Contributions", totalContributions],
+      ["Projects", totalProjects],
     ];
 
-    let y = startY - 25;
-
-    rows.forEach((row, i) => {
-      page.drawRectangle({
-        x: 50,
-        y: y,
-        width: 500,
-        height: 25,
-        color: i % 2 === 0 ? rgb(0.95, 0.95, 0.95) : rgb(1, 1, 1),
-      });
-
-      page.drawText(String(row[0]), {
+    summary.forEach((row) => {
+      page.drawText(`${row[0]}: ${row[1]}`, {
         x: 60,
-        y: y + 7,
-        size: 11,
+        y,
+        size: 12,
         font,
       });
-
-      page.drawText(String(row[1]), {
-        x: 400,
-        y: y + 7,
-        size: 11,
-        font,
-      });
-
-      y -= 25;
+      y -= 20;
     });
 
-    // 💰 FINANCIAL SECTION
+    // 🟢 FINANCIAL
+    y -= 20;
+
     page.drawText("Financial Summary", {
       x: 50,
-      y: y - 30,
+      y,
       size: 14,
       font: bold,
+      color: rgb(0, 0.6, 0),
     });
 
-    page.drawText("Coming Soon (Linked to Wallet System)", {
-      x: 50,
-      y: y - 55,
-      size: 10,
-      font,
-      color: rgb(0.5, 0.5, 0.5),
+    y -= 25;
+
+    page.drawText(
+      `Total Contributions: KES ${totalAmount.toLocaleString()}`,
+      {
+        x: 60,
+        y,
+        size: 12,
+        font,
+      }
+    );
+
+    // =========================
+    // 🌊 WATERMARK (LOGO BACKGROUND)
+    // =========================
+    page.drawImage(logoImage, {
+      x: 150,
+      y: 200,
+      width: 300,
+      height: 300,
+      opacity: 0.08,
     });
 
-    // ✍ SIGNATURE
-    page.drawText("Authorized Signature:", {
-      x: 50,
-      y: 120,
-      size: 10,
-      font,
-    });
-
-    page.drawLine({
-      start: { x: 180, y: 120 },
-      end: { x: 350, y: 120 },
-      thickness: 1,
-    });
-
-    // 📌 FOOTER
+    // FOOTER
     page.drawText("Generated by YEP System", {
       x: 200,
       y: 40,
@@ -168,6 +170,82 @@ export async function GET() {
       color: rgb(0.5, 0.5, 0.5),
     });
 
+    // =========================
+    // 📄 PAGE 2+ (TRANSACTIONS)
+    // =========================
+    page = pdfDoc.addPage([600, 800]);
+    ({ width, height } = page.getSize());
+
+    // HEADER AGAIN
+    page.drawRectangle({
+      x: 0,
+      y: height - 80,
+      width,
+      height: 80,
+      color: rgb(0, 0.3, 0.8),
+    });
+
+    page.drawText("Transactions Report", {
+      x: 200,
+      y: height - 50,
+      size: 16,
+      font: bold,
+      color: rgb(1, 1, 1),
+    });
+
+    let startY = height - 120;
+
+    // TABLE HEADER
+    page.drawRectangle({
+      x: 50,
+      y: startY,
+      width: 500,
+      height: 20,
+      color: rgb(0, 0.3, 0.8),
+    });
+
+    page.drawText("Name", { x: 60, y: startY + 5, size: 10, font: bold, color: rgb(1,1,1) });
+    page.drawText("Amount", { x: 250, y: startY + 5, size: 10, font: bold, color: rgb(1,1,1) });
+    page.drawText("Date", { x: 400, y: startY + 5, size: 10, font: bold, color: rgb(1,1,1) });
+
+    let rowY = startY - 20;
+
+    transactions.forEach((t, i) => {
+      // NEW PAGE IF FULL
+      if (rowY < 50) {
+        page = pdfDoc.addPage([600, 800]);
+        rowY = height - 80;
+      }
+
+      page.drawRectangle({
+        x: 50,
+        y: rowY,
+        width: 500,
+        height: 20,
+        color: i % 2 === 0 ? rgb(0.95, 0.95, 0.95) : rgb(1, 1, 1),
+      });
+
+      page.drawText(
+        t.member?.user?.fullName || "N/A",
+        { x: 60, y: rowY + 5, size: 10, font }
+      );
+
+      page.drawText(
+        `KES ${Number(t.amount).toLocaleString()}`,
+        { x: 250, y: rowY + 5, size: 10, font }
+      );
+
+      page.drawText(
+        new Date(t.createdAt).toLocaleDateString(),
+        { x: 400, y: rowY + 5, size: 10, font }
+      );
+
+      rowY -= 20;
+    });
+
+    // =========================
+    // 📦 FINAL OUTPUT
+    // =========================
     const pdfBytes = await pdfDoc.save();
     const buffer = Buffer.from(pdfBytes);
 
@@ -176,6 +254,7 @@ export async function GET() {
         "Content-Type": "application/pdf",
       },
     });
+
   } catch (error) {
     console.error(error);
     return NextResponse.json(
