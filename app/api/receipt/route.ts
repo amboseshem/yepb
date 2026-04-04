@@ -1,5 +1,8 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
-import PDFDocument from "pdfkit";
+const PDFDocument = require("pdfkit");
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
