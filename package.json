@@ -15,7 +15,7 @@
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.6",
     "nodemailer": "^8.0.4",
-    "pdfkit": "^0.18.0",
+    "pdfkit": "^0.12.3",
     "pg": "^8.20.0",
     "react": "19.2.0",
     "react-dom": "19.2.0"
